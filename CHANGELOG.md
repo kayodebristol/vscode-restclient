@@ -1,3 +1,38 @@
+## 0.22.1 (2019/9/19)
+* __Breaking Change__: Remove snippet support `plain text`
+* __Feature__: [Add setting to display request name as response tab title](https://github.com/Huachao/vscode-restclient/pull/400) ([@lochstar](https://github.com/lochstar))
+* __Feature__: [Allow environment variables to reference shared variables](https://github.com/Huachao/vscode-restclient/pull/409) ([@snackb](https://github.com/snackb))
+* __Improvement__: Add CSP for response and code snippet webviews
+* __Improvement__: Support multipart mime types of request
+
+## 0.22.0 (2019/7/31)
+* __Feature__: [Add support for `GraphQL`](https://github.com/Huachao/vscode-restclient/pull/384) ([@ferronrsmith](https://github.com/ferronrsmith))
+* __Feature__: [Add new system variable - local machine environment variable](https://github.com/Huachao/vscode-restclient/pull/366) ([@mtnrbq](https://github.com/mtnrbq))
+* __Improvement__: [Reduce the extension size by excluding unnecessary images](https://github.com/Huachao/vscode-restclient/pull/397) ([@badre429](https://github.com/badre429))
+* __Improvement__: Reduce the extension size by excluding `node_modules` directory
+* __Improvement__: Replace spinner with octicon animation
+* __Improvement__: Upgrade httpsnippet package to support new languages and frameworks, e.g., `PowerShell`, `Fetch API`
+* __Bug Fix__: [Do not swallow last character in datetime format string](https://github.com/Huachao/vscode-restclient/issues/367)
+* __Bug Fix__: [Allow request body file path contains whitespaces](https://github.com/Huachao/vscode-restclient/issues/376)
+* __Bug Fix__: [Support extract JSON body with pure string payload with `$`](https://github.com/Huachao/vscode-restclient/issues/266)
+
+## 0.21.3 (2019/5/15)
+* __Breaking Change__: Remove support for setting `rest-client.showEnvironmentStatusBarItem` in favor of automatically hide status bar for non-http file feature
+* __Feature__: [Support custom display formats in datetime system variable](https://github.com/Huachao/vscode-restclient/pull/361) ([@connelhooley](https://github.com/connelhooley))
+* __Improvement__: Hide the environment status bar for non-http file
+* __Bug Fix__: [Add title for scroll-to-top button](https://github.com/Huachao/vscode-restclient/issues/355)
+* __Bug Fix__: [Failed to generate Objective-C code snippet for request body contains `null` characters](https://github.com/Huachao/vscode-restclient/issues/349)
+
+## 0.21.2 (2019/3/6)
+* __Feature__: [Add copy response body feature](https://github.com/Huachao/vscode-restclient/pull/317) ([@viktor-evdokimov](https://github.com/viktor-evdokimov))
+* __Feature__: [Add options to disable codelens/links](https://github.com/Huachao/vscode-restclient/issues/295)
+* __Improvement__: [Ability to force newline at end of request body for `application/x-ndjson`](https://github.com/Huachao/vscode-restclient/issues/292)
+* __Bug Fix__: [Cannot copy request as cURL or generate snippet if host looks invalid](https://github.com/Huachao/vscode-restclient/issues/328)
+* __Bug Fix__: [Unable to send requests "multipart/form-data" that contains binary files](https://github.com/Huachao/vscode-restclient/issues/332)
+* __Bug Fix__: [Add missing query string when using python(requests library) to generate code snippet](https://github.com/Huachao/vscode-restclient/issues/338)
+* __Bug Fix__: [Fix year 2018 -> 2019](https://github.com/Huachao/vscode-restclient/pull/318) ([@alaatm](https://github.com/alaatm))
+* __Bug Fix__: Fix request symbols not working when request url depends on requests not sent or request is in curl format
+
 ## 0.21.1 (2019/1/8)
 * __Feature__: Add fold/unfold full response body features in the response preview panel
 * __Bug Fix__: [Copy request as cURL not working](https://github.com/Huachao/vscode-restclient/issues/308)
@@ -13,7 +48,7 @@
 * __Feature__: [Support file variables reference system and environment variables](https://github.com/Huachao/vscode-restclient/issues/208)
 * __Improvement__: [Display actual response for image `HEAD` request](https://github.com/Huachao/vscode-restclient/issues/293)
 * __Bug Fix__: [Redirect all 3xx requests](https://github.com/Huachao/vscode-restclient/issues/285)
-* __Bug Fix__: [Parse rquest body correctly of `multipart/mixed` mime type](https://github.com/Huachao/vscode-restclient/issues/232)
+* __Bug Fix__: [Parse request body correctly of `multipart/mixed` mime type](https://github.com/Huachao/vscode-restclient/issues/232)
 
 ## 0.20.3 (2018/11/1)
 * __Bug Fix__: [Cannot read property 'toLowerCase' of null](https://github.com/Huachao/vscode-restclient/issues/219)

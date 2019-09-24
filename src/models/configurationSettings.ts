@@ -4,7 +4,7 @@ import { getCurrentTextDocument } from '../utils/workspaceUtility';
 import { Headers } from './base';
 import { FormParamEncodingStrategy, fromString as ParseFormParamEncodingStr } from './formParamEncodingStrategy';
 import { HostCertificate } from './hostCertificate';
-import { fromString as ParseLogLevelStr, LogLevel } from './loglevel';
+import { fromString as ParseLogLevelStr, LogLevel } from './logLevel';
 import { fromString as ParsePreviewOptionStr, PreviewOption } from './previewOption';
 
 export interface IRestClientSettings {
@@ -12,6 +12,7 @@ export interface IRestClientSettings {
     defaultHeaders: Headers;
     timeoutInMilliseconds: number;
     showResponseInDifferentTab: boolean;
+    requestNameAsResponseTabTitle: boolean;
     proxy: string;
     proxyStrictSSL: boolean;
     rememberCookiesForSubsequentRequests: boolean;
@@ -44,11 +45,11 @@ export class RestClientSettings implements IRestClientSettings {
     public defaultHeaders: Headers;
     public timeoutInMilliseconds: number;
     public showResponseInDifferentTab: boolean;
+    public requestNameAsResponseTabTitle: boolean;
     public proxy: string;
     public proxyStrictSSL: boolean;
     public rememberCookiesForSubsequentRequests: boolean;
     public enableTelemetry: boolean;
-    public showEnvironmentStatusBarItem: boolean;
     public excludeHostsForProxy: string[];
     public fontSize?: number;
     public fontFamily: string;
@@ -115,6 +116,7 @@ export class RestClientSettings implements IRestClientSettings {
                                                                   "Accept-Encoding": "gzip"
                                                               });
         this.showResponseInDifferentTab = restClientSettings.get<boolean>("showResponseInDifferentTab", false);
+        this.requestNameAsResponseTabTitle = restClientSettings.get<boolean>("requestNameAsResponseTabTitle", false);
         this.rememberCookiesForSubsequentRequests = restClientSettings.get<boolean>("rememberCookiesForSubsequentRequests", true);
         this.timeoutInMilliseconds = restClientSettings.get<number>("timeoutinmilliseconds", 0);
         if (this.timeoutInMilliseconds < 0) {
@@ -138,7 +140,6 @@ export class RestClientSettings implements IRestClientSettings {
         this.previewOption = ParsePreviewOptionStr(restClientSettings.get<string>("previewOption", "full"));
         this.formParamEncodingStrategy = ParseFormParamEncodingStr(restClientSettings.get<string>("formParamEncodingStrategy", "automatic"));
         this.enableTelemetry = restClientSettings.get<boolean>('enableTelemetry', true);
-        this.showEnvironmentStatusBarItem = restClientSettings.get<boolean>('showEnvironmentStatusBarItem', true);
         this.addRequestBodyLineIndentationAroundBrackets = restClientSettings.get<boolean>('addRequestBodyLineIndentationAroundBrackets', true);
         this.decodeEscapedUnicodeCharacters = restClientSettings.get<boolean>('decodeEscapedUnicodeCharacters', false);
         this.logLevel = ParseLogLevelStr(restClientSettings.get<string>('logLevel', 'error'));

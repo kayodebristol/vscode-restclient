@@ -4,9 +4,9 @@ import { Position, Range, TextDocument, TextLine } from 'vscode';
 import * as Constants from '../common/constants';
 
 export class VariableUtility {
-    public static isVariableDefinition(document: TextDocument, position: Position): boolean {
-        let wordRange = document.getWordRangeAtPosition(position);
-        let lineRange = document.lineAt(position);
+    public static isFileVariableDefinition(document: TextDocument, position: Position): boolean {
+        const wordRange = document.getWordRangeAtPosition(position);
+        const lineRange = document.lineAt(position);
         if (!wordRange
             || wordRange.start.character < 1
             || lineRange.text[wordRange.start.character - 1] !== '@') {
@@ -17,19 +17,19 @@ export class VariableUtility {
         return true;
     }
 
-    public static isVariableReference(document: TextDocument, position: Position): boolean {
-        let wordRange = document.getWordRangeAtPosition(position);
-        let lineRange = document.lineAt(position);
+    public static isEnvironmentOrFileVariableReference(document: TextDocument, position: Position): boolean {
+        const wordRange = document.getWordRangeAtPosition(position);
+        const lineRange = document.lineAt(position);
         return VariableUtility.isVariableReferenceFromLine(wordRange, lineRange);
     }
 
     public static isRequestVariableReference(document: TextDocument, position: Position): boolean {
-        let wordRange = document.getWordRangeAtPosition(position, /\{\{(\w+)\.(response|request)?(\.body(\..*?)?|\.headers(\.[\w-]+)?)?\}\}/);
+        const wordRange = document.getWordRangeAtPosition(position, /\{\{(\w+)\.(response|request)?(\.body(\..*?)?|\.headers(\.[\w-]+)?)?\}\}/);
         return wordRange && !wordRange.isEmpty;
     }
 
     public static isPartialRequestVariableReference(document: TextDocument, position: Position): boolean {
-        let wordRange = document.getWordRangeAtPosition(position, /\{\{(\w+)\.(.*?)?\}\}/);
+        const wordRange = document.getWordRangeAtPosition(position, /\{\{(\w+)\.(.*?)?\}\}/);
         return wordRange && !wordRange.isEmpty;
     }
 
@@ -48,20 +48,33 @@ export class VariableUtility {
         return true;
     }
 
-    public static getDefinitionRanges(lines: string[], variable: string): Range[] {
-        let locations: Range[] = [];
+    public static getFileVariableDefinitionRanges(lines: string[], variable: string): Range[] {
+        const locations: Range[] = [];
         for (const [index, line] of lines.entries()) {
             let match: RegExpExecArray;
             if ((match = Constants.FileVariableDefinitionRegex.exec(line)) && match[1] === variable) {
-                let startPos = line.indexOf(`@${variable}`);
-                let endPos = startPos + variable.length + 1;
+                const startPos = line.indexOf(`@${variable}`);
+                const endPos = startPos + variable.length + 1;
                 locations.push(new Range(index, startPos, index, endPos));
             }
         }
         return locations;
     }
 
-    public static getReferenceRanges(lines: string[], variable: string): Range[] {
+    public static getRequestVariableDefinitionRanges(lines: string[], variable: string): Range[] {
+        const locations: Range[] = [];
+        for (const [index, line] of lines.entries()) {
+            let match: RegExpExecArray;
+            if ((match = Constants.RequestVariableDefinitionRegex.exec(line)) && match[1] === variable) {
+                const startPos = line.indexOf(`${variable}`);
+                const endPos = startPos + variable.length + 1;
+                locations.push(new Range(index, startPos, index, endPos));
+            }
+        }
+        return locations;
+    }
+
+    public static getFileVariableReferenceRanges(lines: string[], variable: string): Range[] {
         const locations: Range[] = [];
         const regex = new RegExp(`\{\{${variable}\}\}`, 'g');
         for (const [index, line] of lines.entries()) {
@@ -73,8 +86,8 @@ export class VariableUtility {
 
             let match: RegExpExecArray;
             while (match = regex.exec(line)) {
-                let startPos = match.index + 2;
-                let endPos = startPos + variable.length;
+                const startPos = match.index + 2;
+                const endPos = startPos + variable.length;
                 locations.push(new Range(index, startPos, index, endPos));
                 regex.lastIndex = match.index + 1;
             }

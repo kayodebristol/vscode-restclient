@@ -1,11 +1,12 @@
 "use strict";
 
-import { StatusBarAlignment, StatusBarItem, window } from 'vscode';
+import { languages, StatusBarAlignment, StatusBarItem, window } from 'vscode';
 import * as Constants from '../common/constants';
 import { RestClientSettings } from '../models/configurationSettings';
 import { EnvironmentPickItem } from '../models/environmentPickItem';
 import { trace } from "../utils/decorator";
 import { PersistUtility } from '../utils/persistUtility';
+import { getCurrentTextDocument } from '../utils/workspaceUtility';
 
 export class EnvironmentController {
     private static readonly noEnvironmentPickItem: EnvironmentPickItem = new EnvironmentPickItem(
@@ -17,13 +18,13 @@ export class EnvironmentController {
     private _environmentStatusBarItem: StatusBarItem;
 
     public constructor(initEnvironment: EnvironmentPickItem) {
-        if (EnvironmentController.settings.showEnvironmentStatusBarItem) {
-            this._environmentStatusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 100);
-            this._environmentStatusBarItem.command = 'rest-client.switch-environment';
-            this._environmentStatusBarItem.text = initEnvironment.label;
-            this._environmentStatusBarItem.tooltip = 'Switch REST Client Environment';
-            this._environmentStatusBarItem.show();
-        }
+        this._environmentStatusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 100);
+        this._environmentStatusBarItem.command = 'rest-client.switch-environment';
+        this._environmentStatusBarItem.text = initEnvironment.label;
+        this._environmentStatusBarItem.tooltip = 'Switch REST Client Environment';
+        this._environmentStatusBarItem.show();
+
+        window.onDidChangeActiveTextEditor(this.showHideStatusBar, this);
     }
 
     @trace('Switch Environment')
@@ -47,9 +48,7 @@ export class EnvironmentController {
             return;
         }
 
-        if (EnvironmentController.settings.showEnvironmentStatusBarItem) {
-            this._environmentStatusBarItem.text = item.label;
-        }
+        this._environmentStatusBarItem.text = item.label;
 
         await PersistUtility.saveEnvironment(item);
     }
@@ -64,5 +63,16 @@ export class EnvironmentController {
     }
 
     public dispose() {
+        this._environmentStatusBarItem.dispose();
+    }
+
+    private showHideStatusBar() {
+        const document = getCurrentTextDocument();
+        if (document && languages.match(['http', 'plaintext'], document)) {
+            this._environmentStatusBarItem.show();
+            return;
+        } else {
+            this._environmentStatusBarItem.hide();
+        }
     }
 }

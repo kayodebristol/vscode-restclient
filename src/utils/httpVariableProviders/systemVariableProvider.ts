@@ -9,26 +9,28 @@ import { ResolveErrorMessage, ResolveWarningMessage } from '../../models/httpVar
 import { VariableType } from '../../models/variableType';
 import { AadTokenCache } from '../aadTokenCache';
 import { HttpClient } from '../httpClient';
-import { HttpVariableContext, HttpVariableProvider, HttpVariableValue } from './httpVariableProvider';
+import { EnvironmentVariableProvider } from './environmentVariableProvider';
+import { HttpVariable, HttpVariableContext, HttpVariableProvider } from './httpVariableProvider';
 
 const uuidv4 = require('uuid/v4');
 
-type SystemVariableValue = Pick<HttpVariableValue, Exclude<keyof HttpVariableValue, 'name'>>;
+type SystemVariableValue = Pick<HttpVariable, Exclude<keyof HttpVariable, 'name'>>;
 type ResolveSystemVariableFunc = (name: string, context: HttpVariableContext) => Promise<SystemVariableValue>;
 
 export class SystemVariableProvider implements HttpVariableProvider {
 
     private readonly clipboard: Clipboard;
     private readonly resolveFuncs: Map<string, ResolveSystemVariableFunc> = new Map<string, ResolveSystemVariableFunc>();
-
     private readonly timestampRegex: RegExp = new RegExp(`\\${Constants.TimeStampVariableName}(?:\\s(\\-?\\d+)\\s(y|Q|M|w|d|h|m|s|ms))?`);
-    private readonly datetimeRegex: RegExp = new RegExp(`\\${Constants.DateTimeVariableName}\\s(rfc1123|iso8601)(?:\\s(\\-?\\d+)\\s(y|Q|M|w|d|h|m|s|ms))?`);
+    private readonly datetimeRegex: RegExp = new RegExp(`\\${Constants.DateTimeVariableName}\\s(rfc1123|iso8601|\'.+\'|\".+\")(?:\\s(\\-?\\d+)\\s(y|Q|M|w|d|h|m|s|ms))?`);
     private readonly randomIntegerRegex: RegExp = new RegExp(`\\${Constants.RandomIntVariableName}\\s(\\-?\\d+)\\s(\\-?\\d+)`);
+    private readonly processEnvRegex: RegExp = new RegExp(`\\${Constants.ProcessEnvVariableName}\\s(\\%)?(\\w+)`);
 
     private readonly requestUrlRegex: RegExp = /^(?:[^\s]+\s+)([^:]*:\/\/\/?[^/\s]*\/?)/;
 
     private readonly aadRegex: RegExp = new RegExp(`\\s*\\${Constants.AzureActiveDirectoryVariableName}(\\s+(${Constants.AzureActiveDirectoryForceNewOption}))?(\\s+(ppe|public|cn|de|us))?(\\s+([^\\.]+\\.[^\\}\\s]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}))?(\\s+aud:([^\\.]+\\.[^\\}\\s]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}))?\\s*`);
 
+    private readonly innerSettingsEnvironmentVariableProvider: HttpVariableProvider =  EnvironmentVariableProvider.Instance;
     private static _instance: SystemVariableProvider;
 
     public static get Instance(): SystemVariableProvider {
@@ -45,6 +47,7 @@ export class SystemVariableProvider implements HttpVariableProvider {
         this.registerDateTimeVariable();
         this.registerGuidVariable();
         this.registerRandomIntVariable();
+        this.registerProcessEnvVariable();
         this.registerAadTokenVariable();
     }
 
@@ -55,7 +58,7 @@ export class SystemVariableProvider implements HttpVariableProvider {
         return this.resolveFuncs.has(variableName);
     }
 
-    public async get(document: TextDocument, name: string, context: HttpVariableContext): Promise<HttpVariableValue> {
+    public async get(document: TextDocument, name: string, context: HttpVariableContext): Promise<HttpVariable> {
         const [variableName] = name.split(' ').filter(Boolean);
         if (!this.resolveFuncs.has(variableName)) {
             return { name: variableName, error: ResolveErrorMessage.SystemVariableNotExist };
@@ -65,7 +68,7 @@ export class SystemVariableProvider implements HttpVariableProvider {
         return { name: variableName, ...result };
     }
 
-    public async getAll(document: TextDocument, context: HttpVariableContext): Promise<HttpVariableValue[]> {
+    public async getAll(document: TextDocument, context: HttpVariableContext): Promise<HttpVariable[]> {
         return [...this.resolveFuncs.keys()].map(name => ({ name }));
     }
 
@@ -96,7 +99,13 @@ export class SystemVariableProvider implements HttpVariableProvider {
                     date = utc();
                 }
 
-                return { value: type === 'rfc1123' ? date.toString() : date.toISOString() };
+                if (type === 'rfc1123') {
+                    return { value: date.toString() };
+                } else if (type === 'iso8601') {
+                    return { value: date.toISOString() };
+                } else {
+                    return { value: date.format(type.slice(1, type.length - 1)) };
+                }
             }
 
             return { warning: ResolveWarningMessage.IncorrectDateTimeVariableFormat };
@@ -120,6 +129,41 @@ export class SystemVariableProvider implements HttpVariableProvider {
             }
 
             return { warning: ResolveWarningMessage.IncorrectRandomIntegerVariableFormat };
+        });
+    }
+
+    private async resolveSettingsEnvironmentVariable (name: string) {
+        let document = null;
+        let context = null;
+        if (await this.innerSettingsEnvironmentVariableProvider.has(document, name, context)) {
+            const { value, error, warning } =  await this.innerSettingsEnvironmentVariableProvider.get(document, name, context);
+            if (!error && !warning) {
+                return value.toString();
+            } else {
+                return name;
+            }
+        } else {
+            return name;
+        }
+    }
+
+    private registerProcessEnvVariable() {
+        this.resolveFuncs.set(Constants.ProcessEnvVariableName, async name => {
+            const groups = this.processEnvRegex.exec(name);
+            if (groups !== null && groups.length === 3 ) {
+                const [, refToggle, environmentVarName] = groups;
+                let processEnvName = environmentVarName;
+                if (refToggle !== undefined) {
+                    processEnvName = await this.resolveSettingsEnvironmentVariable(environmentVarName);
+                }
+                let envValue = process.env[processEnvName];
+                if (envValue !== undefined) {
+                    return { value: envValue.toString()};
+                } else {
+                    return { value: ''};
+                }
+            }
+            return { warning: ResolveWarningMessage.IncorrectProcessEnvVariableFormat };
         });
     }
 
