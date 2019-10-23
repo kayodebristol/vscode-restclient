@@ -2,7 +2,7 @@
   "name": "rest-client",
   "displayName": "SP REST Client",
   "description": "SharePoint REST Client for Visual Studio Code",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "s-kainet",
   "author": {
     "name": "Huachao Mao",
@@ -18,7 +18,7 @@
     "url": "https://github.com/s-KaiNet/vscode-restclient/issues",
     "email": "sergeev.srg@gmail.com"
   },
-  "homepage": "https://github.com/s-KaiNet/vscode-restclient",
+  "homepage": "https://github.com/s-KaiNet/vscode-restclient/tree/sp-rest-client",
   "repository": {
     "type": "git",
     "url": "https://github.com/s-KaiNet/vscode-restclient.git"
